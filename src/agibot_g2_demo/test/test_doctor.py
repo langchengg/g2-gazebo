@@ -29,7 +29,15 @@ def test_native_local_daemon_and_bare_metal_are_supported():
     assert errors == []
     assert warnings == []
     assert preflight == 'PASS'
-    assert validation == 'PASS'
+    assert validation == 'NOT_TESTED'
+
+
+def test_failed_preflight_never_reports_runtime_validation_passed():
+    errors, warnings, preflight, validation = validate_environment([], 'Linux', 'aarch64', {})
+    assert errors
+    assert warnings == []
+    assert preflight == 'FAIL'
+    assert validation == 'NOT_TESTED'
 
 
 def test_amd64_support_is_preflight_only_when_matching_daemon_is_amd64():

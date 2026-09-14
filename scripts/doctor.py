@@ -92,9 +92,9 @@ def validate_environment(checks, system, machine, environ):
         errors.append('The local Docker system service must be active.')
 
     preflight = 'PASS' if not errors else 'FAIL'
-    validation = 'PASS'
-    if host_arch == 'amd64' and daemon_arch == 'amd64' and not errors:
-        validation = 'NOT_TESTED'
+    # This command checks prerequisites only.  A successful preflight is not
+    # evidence that this source revision completed the runtime acceptance suite.
+    validation = 'NOT_TESTED'
     return errors, warnings, preflight, validation
 
 
