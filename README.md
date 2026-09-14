@@ -20,7 +20,7 @@ Two Python/rclpy application nodes provide the original exercise:
 | Requirement | Implementation |
 |---|---|
 | Source repository | Git clone from GitHub (`https://github.com/langchengg/g2-gazebo.git`) |
-| Docker / ROS 2 / build | Ubuntu 22.04 (native ARM64, x86_64 preflight only), ROS 2 Humble, normal `colcon build` installation |
+| Docker / ROS 2 / build | Ubuntu 22.04; native ARM64 validated, native x86_64/amd64 accepted by preflight but runtime not tested; ROS 2 Humble with a normal `colcon build` installation |
 | `sayHello` | `/g2/sayHello` requests a small out-and-back simulated left-arm trajectory |
 | `telemetry` | `/g2/telemetry` publishes Gazebo joint measurements on `/g2/joint_states` |
 | Installation and execution guide | This README and the equivalent Chinese guide |
@@ -36,7 +36,7 @@ from this README or from the existence of a GUI process.
 Validation summary for this submission is kept in [docs/validation.md](docs/validation.md).
 
 
-Use a Linux host (preferred **Ubuntu 22.04**) with Python 3.10, Docker Engine,
+Use an **Ubuntu 22.04 Linux host** with Python 3.10, Docker Engine,
 Docker Compose V2, Buildx, and GNU Make.
 
 For **headless acceptance**, no X11 session is required:
@@ -51,10 +51,13 @@ at the start of this reproduction work. These are observations, not validated
 minimum requirements. Allow **15 GiB free disk** for a first build where possible;
 OpenUSD compilation and Docker cache need additional temporary space. Builds use
 two compilation jobs. Keep other large builds stopped. Actual measured peaks and
-elapsed times belong in the release receipt. x86_64 hosts may pass preflight with
-**validation status NOT TESTED** without native revalidation evidence.
+elapsed times belong in the validation receipt. `doctor` checks prerequisites; it
+does not grant runtime acceptance. Both architectures therefore report
+`validation_status=NOT_TESTED` at preflight. The current ARM64 runtime result is
+recorded separately in [docs/validation.md](docs/validation.md); native amd64 remains
+**NOT TESTED**.
 
-All project commands below run in the extracted
+All project commands below run in the cloned or extracted
 `g2-gazebo` directory. For GUI replay, use the Ubuntu graphical terminal and
 preserve local Docker permissions; `sudo` is optional if your user is already in
 the docker group.
@@ -68,7 +71,7 @@ sudo apt-get install -y make python3 xauth x11-xserver-utils ca-certificates cur
 
 If Docker Engine, Compose or Buildx is absent, follow the official
 [Ubuntu Docker installation instructions](https://docs.docker.com/engine/install/ubuntu/)
-for Jammy/arm64 and install `docker-ce`, `docker-ce-cli`, `containerd.io`,
+for Ubuntu 22.04 on the host architecture and install `docker-ce`, `docker-ce-cli`, `containerd.io`,
 `docker-buildx-plugin` and `docker-compose-plugin` from the configured official
 repository. Inspect existing installations before resolving package conflicts.
 Host provisioning is a prerequisite, not an operation tested by extracting this
@@ -84,8 +87,9 @@ is not a substitute for the visible-desktop prerequisite.
 
 ## 2. Clone, verify and enter source tree
 
-Primary path is Git clone. If you prefer the archived source package, use the release asset
-and its `.tar.gz`, `.tar.gz.sha256`, `.tar.gz.manifest.json` together.
+Primary path is Git clone. If a custom archived source package is supplied separately,
+use its `.tar.gz`, `.tar.gz.sha256`, and `.tar.gz.manifest.json` together. No Release
+asset is claimed by this branch.
 The external SHA-256 proves consistency with the supplied checksum, not an independent
 publisher signature. Replace the example archive path with the file you received:
 

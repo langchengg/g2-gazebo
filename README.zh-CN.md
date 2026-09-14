@@ -19,7 +19,7 @@ cd g2-gazebo
 | 原题要求 | 对应实现 |
 |---|---|
 | 源码仓库 | 通过 Git clone 获取：`https://github.com/langchengg/g2-gazebo.git` |
-| Docker / ROS 2 / 构建 | Ubuntu 22.04（原生 ARM64；原生 x86_64 仅作预检） ROS 2 Humble、普通 colcon 安装 |
+| Docker / ROS 2 / 构建 | Ubuntu 22.04；原生 ARM64 已验收，原生 x86_64/amd64 可通过预检但运行尚未测试；ROS 2 Humble、普通 colcon 安装 |
 | sayHello | `/g2/sayHello` 请求仿真左臂小幅往返轨迹 |
 | telemetry | `/g2/telemetry` 将 Gazebo 关节测量发布到 `/g2/joint_states` |
 | 安装执行文档 | 本中文说明及命令完全一致的英文 README |
@@ -34,6 +34,9 @@ cd g2-gazebo
 Validation summary for this submission is kept in [docs/validation.md](docs/validation.md).
 
 
+主机要求为 **Ubuntu 22.04 Linux**，并安装 Python 3.10、Docker Engine、
+Docker Compose V2、Buildx 与 GNU Make。
+
 对于 **Headless 验收**，不需要 X11 会话即可执行核心步骤：
 `make doctor`、`make fetch-model`、`make prepare-model`、`make build-sim`、`make verify-sim`。
 
@@ -44,10 +47,12 @@ Validation summary for this submission is kept in [docs/validation.md](docs/vali
 开发 VM 约有 6 GiB 内存，本轮开始时约 8 GiB 可用磁盘。这些是环境观测，
 不是经测定的最低配置。首次构建建议预留 **15 GiB 磁盘**；OpenUSD 编译与 Docker
 缓存还需要临时空间。构建限制为两个并行编译任务。真实峰值、耗时以本轮 receipt 为准。
-x86_64 主机可通过预检但可能是 **NOT TESTED**，除非已有独立 revalidation 证据。
+`doctor` 只检查前置条件，不授予运行验收状态，因此两种架构的预检都会显示
+`validation_status=NOT_TESTED`。本轮 ARM64 实际运行结果单独记录在
+[docs/validation.md](docs/validation.md)；原生 amd64 仍为 **NOT TESTED**。
 
-下面所有项目命令都在 **Ubuntu 图形终端**中运行，工作目录是解压后的
-`g2-gazebo`。`sudo` 使用正常交互授权；已有获准 Docker 权限时可以省略。
+下面所有项目命令都在 **Ubuntu 终端**中运行，工作目录是克隆或解压后的
+`g2-gazebo`；只有 GUI 路径要求从图形会话的终端启动。`sudo` 使用正常交互授权；已有获准 Docker 权限时可以省略。
 不要为此修改 docker.sock 权限、sudoers、防火墙或网络。
 
 缺少基本工具时，只安装必要工具：
@@ -59,7 +64,7 @@ sudo apt-get install -y make python3 xauth x11-xserver-utils ca-certificates cur
 
 Docker、Compose 或 Buildx 未安装时，按
 [Docker 官方 Ubuntu 安装说明](https://docs.docker.com/engine/install/ubuntu/)
-配置适用于 Jammy/arm64 的官方软件源，安装 `docker-ce`、`docker-ce-cli`、
+配置适用于 Ubuntu 22.04 和主机架构的官方软件源，安装 `docker-ce`、`docker-ce-cli`、
 `containerd.io`、`docker-buildx-plugin`、`docker-compose-plugin`。先检查已有
 安装再处理冲突，不直接删除别的环境。主机初始化是公开前置步骤，不代表本轮
 从归档实验重新做过。ROS、RViz、Gazebo、OpenUSD 都安装在项目镜像内；
@@ -73,7 +78,8 @@ Docker、Compose 或 Buildx 未安装时，按
 
 ## 2. 克隆、校验与进入源码目录
 
-优先路径为 Git Clone。若你使用归档文件，则接收 `.tar.gz`、`.tar.gz.sha256` 和 `.tar.gz.manifest.json` 三个文件。
+优先路径为 Git Clone。若另行提供了项目自定义源码归档，则应同时接收
+`.tar.gz`、`.tar.gz.sha256` 和 `.tar.gz.manifest.json` 三个文件；当前分支不宣称已有 Release 资产。
 外部 SHA-256 验证与给定清单一致，不独立证明发布者身份。把示例路径替换成
 实际收到的归档路径：
 
