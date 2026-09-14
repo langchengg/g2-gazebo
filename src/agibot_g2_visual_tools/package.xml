@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>agibot_g2_visual_tools</name>
+  <version>0.1.0</version>
+  <description>Official Humble RViz application with ordered rendering shutdown for the G2 simulation desktop.</description>
+  <maintainer email="maintainer@example.invalid">G2 Demo Maintainer</maintainer>
+  <license>BSD-3-Clause</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <build_depend>qtbase5-dev</build_depend>
+  <depend>rclcpp</depend>
+  <depend>rviz_common</depend>
+  <depend>rviz_ogre_vendor</depend>
+  <exec_depend>rviz_default_plugins</exec_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

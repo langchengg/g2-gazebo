@@ -1,0 +1,26 @@
+services:
+  sim:
+    image: ${SIM_IMAGE:-agibot-g2-sim:fortress}
+    build:
+      context: .
+      dockerfile: Dockerfile.sim
+      target: simulation
+    init: true
+    stop_signal: SIGINT
+    stop_grace_period: 20s
+    environment:
+      ROS_LOCALHOST_ONLY: "1"
+      ROS_DOMAIN_ID: "43"
+      IGN_PARTITION: ${SIM_PARTITION:-agibot-g2-simulation}
+      GZ_PARTITION: ${SIM_PARTITION:-agibot-g2-simulation}
+      LIBGL_ALWAYS_SOFTWARE: "1"
+      EVIDENCE_DIR: /evidence
+    volumes:
+      - type: bind
+        source: ${G2_MODEL_DIR:-./.artifacts/gazebo-model/generated}
+        target: /opt/g2-model
+        read_only: true
+      - type: bind
+        source: ${EVIDENCE_DIR:-./.artifacts/gazebo/runtime}
+        target: /evidence
+    command: [ros2, launch, agibot_g2_demo, sim.launch.py, "enable_motion:=${SIM_ENABLE_MOTION:-false}"]

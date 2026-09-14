@@ -1,0 +1,15 @@
+# Project-only ROS configuration, never a vendor control-mode configuration.
+# Direct agibot_gdk Python adapter is read-only and requires separately verified
+# SDK files plus an explicitly authorized local JSON deployment configuration.
+# No guessed IP, real joint name, hardware mode or safety limit is supplied.
+/**:
+  ros__parameters:
+    backend: gdk
+    enable_motion: false
+    sdk_config_path: "REQUIRED_ABSOLUTE_PATH_TO_VERIFIED_READ_ONLY_JSON"
+    publish_hz: 10.0
+    feedback_timeout: 0.6
+    future_tolerance: 0.05
+    gdk_startup_timeout: 5.0
+    gdk_poll_timeout: 0.5
+    fault_mode: none

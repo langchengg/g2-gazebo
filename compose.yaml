@@ -1,0 +1,18 @@
+name: agibot-g2-demo
+services:
+  demo:
+    image: agibot-g2-demo:humble
+    build:
+      context: .
+      target: runtime
+    init: true
+    stop_signal: SIGINT
+    environment:
+      ROS_LOCALHOST_ONLY: "1"
+      ROS_DOMAIN_ID: "42"
+      EVIDENCE_DIR: /evidence
+    volumes:
+      - type: bind
+        source: ${EVIDENCE_DIR:-./.artifacts/runtime}
+        target: /evidence
+    stop_grace_period: 10s

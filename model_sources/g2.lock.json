@@ -1,0 +1,91 @@
+{
+  "repository": "agibot-world/GenieSimAssets",
+  "revision": "a0813aad7c16165daffbe6c2737754e0344809ee",
+  "license": "CC-BY-NC-SA-4.0",
+  "gated_observed": false,
+  "purpose_scope": "Noncommercial local simulation; no commercial license inferred",
+  "files": [
+    {
+      "size": 67256,
+      "path": "robot/curobo_robot/assets/robot/G2/G2_omnipicker_fixed_dual.urdf",
+      "sha256": "eb782de0b6f1faf1fcddfb5e2f7004a39e350c4f297ca51a56003ce8f9ad8319"
+    },
+    {
+      "size": 512,
+      "path": "robot/curobo_robot/assets/robot/G2/config.yaml",
+      "sha256": "652791d126f5ef69b3da056544e1bbd853f7b0ba687be1fbd9f0742758913e36"
+    },
+    {
+      "size": 567636,
+      "path": "robot/curobo_robot/assets/robot/G2/configuration/Cam.usd",
+      "sha256": "f58b881307b67f42ea849c93f4e66736c9eacd3c832ff9839f7a1d394327b6d0"
+    },
+    {
+      "size": 57619915,
+      "path": "robot/curobo_robot/assets/robot/G2/configuration/robot_base.usd",
+      "sha256": "6abf3888859bc2385bd084bcdeec8fe464891110d61d3fa9ef1c7efd5a690488"
+    },
+    {
+      "size": 15953,
+      "path": "robot/curobo_robot/assets/robot/G2/configuration/robot_physics.usd",
+      "sha256": "1680e1dc7ea75a2585144eee33b1224284a80f5d25c9dacfd0caa0b9170040f2"
+    },
+    {
+      "size": 3701,
+      "path": "robot/curobo_robot/assets/robot/G2/configuration/robot_robot.usd",
+      "sha256": "a7f5238b029832980a6fd82a224a822781e7a121c15e4fcc29c8b71c32b4cae4"
+    },
+    {
+      "size": 645,
+      "path": "robot/curobo_robot/assets/robot/G2/configuration/robot_sensor.usd",
+      "sha256": "d32e25c7daf3f7fdd008086f37e7f95dd2198a1bf94068c72defd7fdf81053f3"
+    },
+    {
+      "size": 1478,
+      "path": "robot/curobo_robot/assets/robot/G2/robot.usd",
+      "sha256": "1c9fc8b4f245f38730b00a8e327d0dfe5f391e789e3df93a66fd7e9f15b1cc4c"
+    },
+    {
+      "size": 1088848,
+      "path": "robot/curobo_robot/assets/robot/G2/robot.usda",
+      "sha256": "63ab74b9ff32ced3fc5a3fcd712f97198cfe176b9f3622d5c8368844f9ae1833"
+    },
+    {
+      "path": "LICENSE",
+      "size": 20850,
+      "sha256": "e66c269d4819aaab34b49ef5220c4ddab6756f21bb5180761a4eb8561f2b7bbd"
+    },
+    {
+      "path": "README.md",
+      "size": 3455,
+      "sha256": "4979c290a4f00f242a6a22df9ca3ac7806506538634266a4a100e9ec2727afa2"
+    }
+  ],
+  "license_source": "https://huggingface.co/datasets/agibot-world/GenieSimAssets/blob/a0813aad7c16165daffbe6c2737754e0344809ee/LICENSE",
+  "raw_urdf_sha256": "eb782de0b6f1faf1fcddfb5e2f7004a39e350c4f297ca51a56003ce8f9ad8319",
+  "converter": {
+    "distribution": "OpenUSD official source",
+    "version": "26.8",
+    "repository": "https://github.com/PixarAnimationStudios/OpenUSD",
+    "revision": "ee47c679abde5b467a7b6a41f3b2285564a4222e",
+    "execution_platform": "Native Linux ARM64; isolated Docker build; system Python 3.10",
+    "entrypoint": "scripts/prepare_model.py",
+    "dockerfile": "Dockerfile.model-tools",
+    "output_manifest": "generated_manifest.json",
+    "cmake_version": "3.31.10",
+    "tbb": {
+      "repository": "https://github.com/oneapi-src/oneTBB",
+      "version": "2021.12.0",
+      "revision": "9afd759b72c0c233cd5ea3c3c06b0894c9da9c54",
+      "basis": "OpenUSD pinned build_scripts/build_usd.py ONETBB_URL"
+    }
+  },
+  "repo_id": "agibot-world/GenieSimAssets",
+  "repo_type": "dataset",
+  "dependency_policy": {
+    "entry_layer": "robot/curobo_robot/assets/robot/G2/robot.usda",
+    "all_composed_layers_must_be_locked": true,
+    "textures": "Only constant diffuse color conversion; no external texture assets",
+    "omitted_shader_implementation": "OmniPBR.mdl is not loaded; constant authored diffuse colors are exported"
+  }
+}

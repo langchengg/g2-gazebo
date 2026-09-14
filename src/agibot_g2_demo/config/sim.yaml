@@ -1,0 +1,23 @@
+/g2/sayHello:
+  ros__parameters:
+    backend: gazebo
+    use_sim_time: true
+    enable_motion: false
+    displacement: 0.05
+    duration: 6.0
+    max_acceleration: 0.5
+    position_tolerance: 0.002
+    velocity_tolerance: 0.01
+    stable_duration: 0.2
+    feedback_timeout: 3.0
+    sim_feedback_timeout: 1.0
+    sim_pause_timeout: 3.0
+    motion_timeout: 180.0
+/g2/telemetry:
+  ros__parameters:
+    backend: gazebo
+    use_sim_time: true
+    publish_hz: 10.0
+    feedback_timeout: 3.0
+    sim_feedback_timeout: 1.0
+    sim_pause_timeout: 3.0

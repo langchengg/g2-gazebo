@@ -1,0 +1,14 @@
+.git
+.cache
+.artifacts
+build
+install
+log
+sdk
+**/__pycache__
+**/.pytest_cache
+.env
+**/hardware.yaml
+gdk-2.6.3-*-notes.md
+legacy
+docs

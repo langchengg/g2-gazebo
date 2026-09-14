@@ -1,0 +1,57 @@
+# The converter is separate from ROS runtime. Native ARM64 OpenUSD is built
+# from the reviewed official commit; no architecture emulation or Mac tools.
+ARG ROS_IMAGE=ros:humble-ros-base-jammy@sha256:75dd3aba34a3838dadbb31a9f7bef769bdfa8713e6cec686fc868db2981b0987
+FROM ${ROS_IMAGE} AS usd-build
+ARG USD_COMMIT=ee47c679abde5b467a7b6a41f3b2285564a4222e
+ARG BUILD_JOBS=2
+ARG TBB_COMMIT=9afd759b72c0c233cd5ea3c3c06b0894c9da9c54
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential ninja-build git ca-certificates python3-dev python3-pip \
+    python3-jinja2 && rm -rf /var/lib/apt/lists/*
+# OpenUSD 26.08 requires CMake >= 3.27; Jammy's CMake is older.
+RUN python3 -m pip install --no-cache-dir --only-binary=:all: cmake==3.31.10
+# Match the oneTBB version selected by this exact OpenUSD build_usd.py.
+# Jammy oneTBB 2021.5 lacks the task_group(context) API used by USD 26.08.
+RUN git init /tmp/oneTBB && cd /tmp/oneTBB \
+    && git remote add origin https://github.com/oneapi-src/oneTBB.git \
+    && git fetch --depth=1 origin "${TBB_COMMIT}" \
+    && git checkout --detach FETCH_HEAD \
+    && test "$(git rev-parse HEAD)" = "${TBB_COMMIT}" \
+    && cmake -S . -B /tmp/tbb-build -G Ninja \
+      -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/tbb \
+      -DCMAKE_INSTALL_LIBDIR=lib -DTBB_TEST=OFF -DTBB_STRICT=OFF \
+    && cmake --build /tmp/tbb-build --parallel "${BUILD_JOBS}" \
+    && cmake --install /tmp/tbb-build \
+    && cp LICENSE.txt /opt/tbb/LICENSE.txt \
+    && printf '%s\n' "${TBB_COMMIT}" > /opt/tbb/source-commit.txt \
+    && rm -rf /tmp/oneTBB /tmp/tbb-build
+RUN git init /tmp/OpenUSD && cd /tmp/OpenUSD \
+    && git remote add origin https://github.com/PixarAnimationStudios/OpenUSD.git \
+    && git fetch --depth=1 origin "${USD_COMMIT}" \
+    && git checkout --detach FETCH_HEAD \
+    && test "$(git rev-parse HEAD)" = "${USD_COMMIT}" \
+    && cmake -S . -B /tmp/usd-build -G Ninja \
+      -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/usd \
+      -DCMAKE_PREFIX_PATH=/opt/tbb -DTBB_DIR=/opt/tbb/lib/cmake/TBB \
+      -DPXR_ENABLE_PYTHON_SUPPORT=ON -DPXR_PYTHON_INSTALL_DIR=lib/python \
+      -DPython3_EXECUTABLE=/usr/bin/python3 \
+      -DPXR_BUILD_IMAGING=OFF -DPXR_BUILD_USD_IMAGING=OFF \
+      -DPXR_BUILD_USDVIEW=OFF -DPXR_BUILD_EXEC=OFF \
+      -DPXR_BUILD_USD_VALIDATION=OFF -DPXR_BUILD_TESTS=OFF \
+      -DPXR_BUILD_EXAMPLES=OFF -DPXR_BUILD_TUTORIALS=OFF \
+      -DPXR_BUILD_USD_TOOLS=OFF -DPXR_ENABLE_GL_SUPPORT=OFF \
+      -DPXR_ENABLE_MATERIALX_SUPPORT=OFF \
+    && cmake --build /tmp/usd-build --parallel "${BUILD_JOBS}" \
+    && cmake --install /tmp/usd-build \
+    && cp LICENSE.txt /opt/usd/LICENSE.txt \
+    && printf '%s\n' "${USD_COMMIT}" > /opt/usd/source-commit.txt \
+    && rm -rf /tmp/OpenUSD /tmp/usd-build
+FROM ${ROS_IMAGE} AS model-tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 && rm -rf /var/lib/apt/lists/*
+COPY --from=usd-build /opt/usd /opt/usd
+COPY --from=usd-build /opt/tbb /opt/tbb
+ENV PYTHONPATH=/opt/usd/lib/python LD_LIBRARY_PATH=/opt/usd/lib:/opt/tbb/lib
+RUN python3 -c 'from pxr import Usd, UsdGeom, UsdShade; import sys,sysconfig; assert Usd.GetVersion()==(0,26,8); s=Usd.Stage.CreateInMemory(); UsdGeom.Cube.Define(s,"/Smoke"); assert s.GetPrimAtPath("/Smoke"); print(sys.executable,sysconfig.get_config_var("SOABI"),Usd.__file__,Usd.GetVersion())'
+RUN dpkg-query -W > /opt/usd/system-packages.txt
+ENTRYPOINT ["/usr/bin/python3"]

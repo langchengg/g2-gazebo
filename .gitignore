@@ -1,0 +1,12 @@
+.cache/
+.artifacts/
+build/
+install/
+log/
+__pycache__/
+.pytest_cache/
+*.pyc
+.DS_Store
+.env
+sdk/
+hardware.yaml

@@ -1,0 +1,52 @@
+{
+  "requested_product": "AGIBOT G2 GDK",
+  "requested_version": "2.6.3",
+  "status": "BLOCKED",
+  "artifacts": [],
+  "downloaded_bytes": 0,
+  "sdk_sha256": null,
+  "sdk_image_digest": null,
+  "official_checksum": "NOT OBTAINED",
+  "product_version_verified": false,
+  "architecture": "UNVERIFIED",
+  "python_abi": "UNVERIFIED",
+  "attempts": [
+    {
+      "utc": "2026-09-08T22:40:28.421890+00:00",
+      "location": "Mac",
+      "resource": "http://10.42.1.101:8849/install.sh",
+      "exit_code": 28,
+      "saved_bytes": 0
+    },
+    {
+      "utc": "2026-09-08T22:40:32.440663+00:00",
+      "location": "Mac",
+      "resource": "http://10.42.1.101:8849/install_example.sh",
+      "exit_code": 28,
+      "saved_bytes": 0
+    },
+    {
+      "utc": "2026-09-08T22:49:47.208771+00:00",
+      "location": "Ubuntu VM",
+      "resource": "http://10.42.1.101:8849/install.sh",
+      "exit_code": 28,
+      "saved_bytes": 0
+    },
+    {
+      "utc": "2026-09-08T22:49:51.217470+00:00",
+      "location": "Ubuntu VM",
+      "resource": "http://10.42.1.101:8849/install_example.sh",
+      "exit_code": 28,
+      "saved_bytes": 0
+    }
+  ],
+  "source_page": "https://support.agibot.com/?gdk_version=2.6.3#contents/howto/deploy.md",
+  "stages": {
+    "S0": "BLOCKED: no installer or SDK payload obtained",
+    "S1": "NOT RUN",
+    "S2": "NOT RUN: project fixture tests are separate",
+    "S3": "NOT RUN: no verified no-device initialization contract",
+    "S4": "NOT RUN: no device/authorization",
+    "S5": "NOT RUN: no device/configuration/on-site motion authorization"
+  }
+}

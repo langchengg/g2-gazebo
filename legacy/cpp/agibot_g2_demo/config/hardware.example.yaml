@@ -1,0 +1,16 @@
+# Documentation template only: the GDK backend is currently UNIMPLEMENTED.
+# This file does not enable real SDK calls, discovery, or robot connections.
+# Replace placeholders only after docs/gdk_api_mapping.md and the hardware
+# checklist have been completed against the delivered SDK and authorized robot.
+/**:
+  ros__parameters:
+    backend: gdk
+    enable_motion: false
+    hardware_model: "REQUIRED_VERIFIED_MODEL"
+    firmware_version: "REQUIRED_VERIFIED_FIRMWARE"
+    sdk_version: "REQUIRED_VERIFIED_GDK_2.6.3"
+    supported_platform: "REQUIRED_VERIFIED_OS_CPU_ABI"
+    runtime_configuration: "REQUIRED_OFFICIAL_RUNTIME_CONFIGURATION"
+    joint_mapping: "REQUIRED_VERIFIED_NAMES_ORDER_UNITS"
+    motion_preconditions: "REQUIRED_DOCUMENTED_CONTROL_AND_STOP_SEMANTICS"
+    site_authorization: "REQUIRED_OPERATOR_CONFIRMATION_FOR_THIS_ONE_ACTION"

@@ -1,0 +1,51 @@
+# Native ARM64 Fortress libraries and bridge are binary packages. The two missing
+# Humble integration packages are built from pinned official Apache-2.0 sources.
+ARG ROS_BASE=ros:humble-ros-base-jammy@sha256:75dd3aba34a3838dadbb31a9f7bef769bdfa8713e6cec686fc868db2981b0987
+FROM ${ROS_BASE} AS simdeps
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ENV GZ_VERSION=fortress CMAKE_BUILD_PARALLEL_LEVEL=2
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git ca-certificates build-essential cmake pkg-config python3-colcon-common-extensions \
+    python3-pytest python3-setuptools python3-yaml \
+    ignition-fortress libignition-gazebo6-dev libignition-plugin-dev libgflags-dev \
+    ros-humble-ros-gz-bridge ros-humble-ros-gz-interfaces \
+    ros-humble-controller-manager ros-humble-hardware-interface ros-humble-pluginlib \
+    ros-humble-joint-trajectory-controller ros-humble-joint-state-broadcaster \
+    ros-humble-control-toolbox ros-humble-position-controllers ros-humble-rclcpp-lifecycle ros-humble-yaml-cpp-vendor \
+    ros-humble-xacro ros-humble-robot-state-publisher ros-humble-rclpy \
+    ros-humble-ament-index-python ros-humble-rcl-interfaces ros-humble-sensor-msgs \
+    ros-humble-std-msgs ros-humble-std-srvs ros-humble-launch-ros \
+    ros-humble-control-msgs ros-humble-trajectory-msgs ros-humble-action-msgs \
+    ros-humble-controller-manager-msgs ros-humble-rosgraph-msgs \
+    xvfb xauth mesa-utils libgl1-mesa-dri openbox ffmpeg xdotool wmctrl \
+    ros-humble-rviz2 ros-humble-tf2-ros ros-humble-tf2-msgs python3-tk python3-numpy python3-yaml \
+    x11vnc novnc websockify \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /opt/sim_vendor
+RUN git init sources-control && git -C sources-control remote add origin https://github.com/ros-controls/gz_ros2_control.git && \
+    git -C sources-control fetch --depth 1 origin c88a5fd9170af120c263c1201f0744a40f93d673 && \
+    git -C sources-control checkout --detach FETCH_HEAD && \
+    git init sources-gz && git -C sources-gz remote add origin https://github.com/gazebosim/ros_gz.git && \
+    git -C sources-gz fetch --depth 1 origin 28e586a3d41f80f4a91e81902b8618c9d506022c && \
+    git -C sources-gz checkout --detach FETCH_HEAD && \
+    source /opt/ros/humble/setup.bash && \
+    colcon build --base-paths sources-control/gz_ros2_control sources-control/gz_ros2_control_demos sources-gz/ros_gz_sim \
+      --executor sequential --event-handlers console_direct+ --cmake-args -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release
+
+FROM simdeps AS simulation
+WORKDIR /opt/demo
+COPY src/ src/
+COPY docker/ docker/
+COPY scripts/ scripts/
+COPY model_sources/ model_sources/
+COPY Dockerfile Dockerfile.sim Dockerfile.model-tools compose.yaml compose.sim.yaml Makefile .dockerignore ./
+RUN source /opt/ros/humble/setup.bash && source /opt/sim_vendor/install/setup.bash && \
+    colcon build --event-handlers console_direct+ && source install/setup.bash && \
+    python3 scripts/check_install.py --visual && \
+    g++ -std=c++17 scripts/check_mesh.cpp -o /opt/demo/check_mesh $(pkg-config --cflags --libs ignition-common4-graphics) && \
+    python3 scripts/source_manifest.py --root /opt/demo --scope runtime --output source-manifest.json
+RUN dpkg-query -W > /opt/demo/system-packages.txt
+ENV ROS_LOCALHOST_ONLY=1 ROS_DOMAIN_ID=43 PYTHONUNBUFFERED=1 LIBGL_ALWAYS_SOFTWARE=1
+STOPSIGNAL SIGINT
+ENTRYPOINT ["/opt/demo/docker/sim-entrypoint.sh"]
+CMD ["ros2", "launch", "agibot_g2_demo", "sim.launch.py"]
