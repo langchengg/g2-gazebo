@@ -2,6 +2,15 @@
 
 [English delivery README](README.md)
 
+## 克隆与验收入口
+
+```bash
+git clone https://github.com/langchengg/g2-gazebo.git
+cd g2-gazebo
+```
+
+本文档与英语版一致，仓库根目录均为 `g2-gazebo`。
+
 ## 简介
 
 这是 Agibot G2 **仿真**应用。Gazebo Fortress 负责物理运算；RViz2 通过同一份
@@ -9,8 +18,8 @@
 
 | 原题要求 | 对应实现 |
 |---|---|
-| 源码仓库 | 可重定位源码归档，不需要 Git 元数据 |
-| Docker / ROS 2 / 构建 | Ubuntu 22.04、ROS 2 Humble、原生 ARM64、普通 colcon 安装 |
+| 源码仓库 | 通过 Git clone 获取：`https://github.com/langchengg/g2-gazebo.git` |
+| Docker / ROS 2 / 构建 | Ubuntu 22.04（原生 ARM64；原生 x86_64 仅作预检） ROS 2 Humble、普通 colcon 安装 |
 | sayHello | `/g2/sayHello` 请求仿真左臂小幅往返轨迹 |
 | telemetry | `/g2/telemetry` 将 Gazebo 关节测量发布到 `/g2/joint_states` |
 | 安装执行文档 | 本中文说明及命令完全一致的英文 README |
@@ -22,19 +31,20 @@
 
 ## 1. 公开前置条件与命令执行位置
 
-需要 **Ubuntu 22.04 ARM64**、Python 3.10、本机 Docker Engine、Compose V2、
-Buildx、GNU Make，以及**使用 Xorg（X11）登录会话的已有图形桌面**。
-需要 `XDG_SESSION_TYPE=x11`、有效的 `DISPLAY`、当前显示对应的可读
-`XAUTHORITY` 文件和 `/tmp/.X11-unix`。项目不安装桌面。在 Ubuntu 登录界面选择
-用户，通过齿轮菜单选择 **Ubuntu on Xorg** 后登录；退出原会话前先保存桌面工作。
-此全桌面 X11 录制路径不支持 Wayland/XWayland，本轮 VM 实际捕获已失败。
-只有字符终端的 Ubuntu Server 不满足此交互主路径的前置条件。
+Validation summary for this submission is kept in [docs/validation.md](docs/validation.md).
+
+
+对于 **Headless 验收**，不需要 X11 会话即可执行核心步骤：
+`make doctor`、`make fetch-model`、`make prepare-model`、`make build-sim`、`make verify-sim`。
+
+对于 **GUI 可视化校验**，需要有可用的图形会话：Linux 下 X11/Xorg 登录，
+并满足 `XDG_SESSION_TYPE=x11`、可读 `XAUTHORITY`、`/tmp/.X11-unix`。
+项目不安装桌面。
 
 开发 VM 约有 6 GiB 内存，本轮开始时约 8 GiB 可用磁盘。这些是环境观测，
 不是经测定的最低配置。首次构建建议预留 **15 GiB 磁盘**；OpenUSD 编译与 Docker
-缓存还需要临时空间。构建限制为两个编译任务，避免同时运行其他大型构建。
-真实峰值、耗时以本轮 receipt 为准。x86_64、从零安装 Ubuntu 和 Docker 的流程
-在没有独立证据时均为 **NOT TESTED**。
+缓存还需要临时空间。构建限制为两个并行编译任务。真实峰值、耗时以本轮 receipt 为准。
+x86_64 主机可通过预检但可能是 **NOT TESTED**，除非已有独立 revalidation 证据。
 
 下面所有项目命令都在 **Ubuntu 图形终端**中运行，工作目录是解压后的
 `g2-gazebo`。`sudo` 使用正常交互授权；已有获准 Docker 权限时可以省略。
@@ -61,9 +71,9 @@ Docker、Compose 或 Buildx 未安装时，按
 或 TCP 端口。代码中的可选无桌面 VNC 路径为 **NOT TESTED**，不是本交付主路径，
 也不能代替已有可见桌面的前置条件。
 
-## 2. 校验和解压源码包
+## 2. 克隆、校验与进入源码目录
 
-接收 `.tar.gz`、`.tar.gz.sha256` 和 `.tar.gz.manifest.json` 三个文件。
+优先路径为 Git Clone。若你使用归档文件，则接收 `.tar.gz`、`.tar.gz.sha256` 和 `.tar.gz.manifest.json` 三个文件。
 外部 SHA-256 验证与给定清单一致，不独立证明发布者身份。把示例路径替换成
 实际收到的归档路径：
 
@@ -82,21 +92,27 @@ cd "$HOME/g2 simulation workspace/g2-gazebo"
 条目和文件内容后再解压。父目录包含空格是支持并纳入实验的情况。
 不需要 `.git`、作者 HOME、预转换模型或作者成品镜像。
 
-## 3. 最短完整 Quick Start
+## 3. 最短完整 Quick Start（无头 + 可选 GUI）
 
 执行 `ACCEPT_MODEL_LICENSE=yes` 前先读第 4 节模型许可。
 在 Ubuntu 终端 1 中**逐行**执行；下载、工具链构建、镜像构建会占用当前终端。
-`demo-visual` 最多等待 200 秒就绪，打印 READY 后返回，但交互会话保持运行。
-READY 后先看见桌面的三个窗口，再发送动作。
+头less 核验建议运行：
+`make doctor` -> `make fetch-model` -> `make prepare-model` -> `make build-sim` -> `make verify-sim`，
+不需要桌面环境。
+
+如需要可视化，请额外运行：`demo-visual`，最多等待 200 秒就绪，打印 READY 后返回，但交互会话保持运行。
 
 <!-- BEGIN QUICKSTART: docs/quickstart.commands.sh -->
 ```bash
 # Command checklist, not an unattended demo. Run one line at a time.
-# Ubuntu graphical terminal; working directory is the extracted g2-gazebo folder.
+# Working directory is the extracted g2-gazebo folder.
 sudo make doctor
 sudo make fetch-model ACCEPT_MODEL_LICENSE=yes
 sudo make prepare-model
 sudo make build-sim
+sudo make verify-sim
+
+# Optional visible desktop mode
 sudo make sim-doctor
 sudo --preserve-env=DISPLAY,XAUTHORITY,XDG_SESSION_TYPE make demo-visual
 sudo make ui-info
@@ -107,14 +123,12 @@ sudo make check-visual
 # Wait for this run_id to reach SUCCEEDED before recording another explicit motion.
 sudo make record-visual
 sudo make ui-down
-sudo make verify-sim
 ```
 <!-- END QUICKSTART -->
 
 以上命令清单也在 `docs/quickstart.commands.sh`，它是逐步检查表，不是无人值守
-动画脚本。英文和中文使用同一块命令。`record-visual` 会明确请求**另一次**动作，
-请先等待上一 run_id 结束。`ui-down` 只停止这个解压目录对应的可视化会话；
-随后 `verify-sim` 创建独立短生命周期世界，结束后自动清理。
+动画脚本。英文和中文使用同一块命令。`verify-sim` 是无头验收步骤。`record-visual` 会明确请求**另一次**动作，
+请先等待上一 run_id 结束。`ui-down` 只停止这个解压目录对应的可视化会话。
 
 ## 4. 从固定官方来源获取模型，并自行确认许可
 

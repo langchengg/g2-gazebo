@@ -15,9 +15,9 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=False,
-    maintainer='Project maintainer',
-    maintainer_email='maintainer@example.invalid',
-    description='Python rclpy mock application with an isolated optional read-only GDK adapter.',
+    maintainer='Lang Cheng',
+    maintainer_email='lang.cheng@student.manchester.ac.uk',
+    description='Python ROS 2 application for Agibot G2 arm motion and joint telemetry in Gazebo simulation.',
     license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={'console_scripts': [
