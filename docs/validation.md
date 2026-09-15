@@ -105,9 +105,9 @@ SHA-256 values are recorded in that receipt. Those archives include command logs
 JUnit, motion CSV/JSON, source/telemetry correlation, TF/FK samples and cleanup
 records. They contain no model mesh in the public branch.
 
-Native amd64 runtime and GUI remain **NOT TESTED**. The current branch does not
-claim a Release asset, does not contain the restricted model, and has not been
-merged into `main` by this validation record.
+Native amd64 runtime and GUI remain **NOT TESTED**. At validation time the branch
+had no Release asset, did not contain the restricted model, and had not yet been
+merged into `main`. Later publication status does not change the runtime evidence.
 
 Official compatibility references checked for this text:
 

@@ -1,5 +1,5 @@
 # Command checklist, not an unattended demo. Run one line at a time.
-# Working directory is the extracted g2-gazebo folder.
+# Working directory is the cloned or extracted g2-gazebo folder.
 sudo make doctor
 sudo make fetch-model ACCEPT_MODEL_LICENSE=yes
 sudo make prepare-model

@@ -79,7 +79,7 @@ Docker、Compose 或 Buildx 未安装时，按
 ## 2. 克隆、校验与进入源码目录
 
 优先路径为 Git Clone。若另行提供了项目自定义源码归档，则应同时接收
-`.tar.gz`、`.tar.gz.sha256` 和 `.tar.gz.manifest.json` 三个文件；当前分支不宣称已有 Release 资产。
+`.tar.gz`、`.tar.gz.sha256` 和 `.tar.gz.manifest.json` 三个文件；本文档不宣称已有 Release 资产。
 外部 SHA-256 验证与给定清单一致，不独立证明发布者身份。把示例路径替换成
 实际收到的归档路径：
 
@@ -102,7 +102,7 @@ cd "$HOME/g2 simulation workspace/g2-gazebo"
 
 执行 `ACCEPT_MODEL_LICENSE=yes` 前先读第 4 节模型许可。
 在 Ubuntu 终端 1 中**逐行**执行；下载、工具链构建、镜像构建会占用当前终端。
-头less 核验建议运行：
+无界面核验建议运行：
 `make doctor` -> `make fetch-model` -> `make prepare-model` -> `make build-sim` -> `make verify-sim`，
 不需要桌面环境。
 
@@ -111,7 +111,7 @@ cd "$HOME/g2 simulation workspace/g2-gazebo"
 <!-- BEGIN QUICKSTART: docs/quickstart.commands.sh -->
 ```bash
 # Command checklist, not an unattended demo. Run one line at a time.
-# Working directory is the extracted g2-gazebo folder.
+# Working directory is the cloned or extracted g2-gazebo folder.
 sudo make doctor
 sudo make fetch-model ACCEPT_MODEL_LICENSE=yes
 sudo make prepare-model

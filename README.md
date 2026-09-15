@@ -89,7 +89,7 @@ is not a substitute for the visible-desktop prerequisite.
 
 Primary path is Git clone. If a custom archived source package is supplied separately,
 use its `.tar.gz`, `.tar.gz.sha256`, and `.tar.gz.manifest.json` together. No Release
-asset is claimed by this branch.
+asset is claimed by this guide.
 The external SHA-256 proves consistency with the supplied checksum, not an independent
 publisher signature. Replace the example archive path with the file you received:
 
@@ -140,7 +140,7 @@ In GUI mode, wait for READY and desktop windows before sending motion.
 <!-- BEGIN QUICKSTART: docs/quickstart.commands.sh -->
 ```bash
 # Command checklist, not an unattended demo. Run one line at a time.
-# Working directory is the extracted g2-gazebo folder.
+# Working directory is the cloned or extracted g2-gazebo folder.
 sudo make doctor
 sudo make fetch-model ACCEPT_MODEL_LICENSE=yes
 sudo make prepare-model
