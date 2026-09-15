@@ -1,4 +1,9 @@
-"""The only backend owner. Every topic/service here is a project interface."""
+"""Expose the project ``sayHello`` interface through one selected backend.
+
+The node selects mock, Gazebo, or read-only legacy GDK behavior. Gazebo delegates
+its ROS resources and simulation-clock lifecycle to ``GazeboBackend``; the other
+paths retain their local observation loop for compatibility.
+"""
 import dataclasses
 import json
 import math
@@ -18,6 +23,12 @@ from .motion import Config, Engine, MotionState, valid_fault, validate_observati
 
 
 class SayHelloNode(Node):
+    """Own resources for one small, explicitly requested arm-motion service.
+
+    Startup never requests motion and ``enable_motion`` defaults to false. The
+    node exposes ``/g2/say_hello`` and ``/g2/hello_status`` either directly or via
+    its Gazebo adapter, then releases the selected backend during shutdown.
+    """
     def __init__(self):
         super().__init__('sayHello', namespace='/g2')
         self.engine = self.gdk = self.sim = self.timer = None
@@ -44,6 +55,7 @@ class SayHelloNode(Node):
         return SetParametersResult(successful=True)
 
     def _configure(self):
+        """Construct one backend without mixing clock domains or resource owners."""
         self.backend = self.parameter('backend', 'mock')
         if self.backend == 'gazebo':
             from .backends.gazebo_backend import GazeboBackend
@@ -119,6 +131,7 @@ class SayHelloNode(Node):
         return self.gdk_error or self.gdk.health_reason(current)
 
     def request(self, _request, response):
+        """Accept legacy-backend work; success does not mean motion has completed."""
         current = time.monotonic()
         if self.engine is not None:
             result = self.engine.request(current)
@@ -134,6 +147,7 @@ class SayHelloNode(Node):
         return response
 
     def tick(self):
+        """Advance legacy backends with watchdogs driven by a steady wall clock."""
         current = time.monotonic()
         ros_sample_time = self.get_clock().now().to_msg()
         if self.engine is not None:
@@ -206,6 +220,7 @@ class SayHelloNode(Node):
             self.last_status, self.last_status_time = encoded, current
 
     def close(self):
+        """Idempotently cancel timers and release the active backend."""
         if self.closed:
             return
         self.closed = True

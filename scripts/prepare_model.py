@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Build native Linux OpenUSD tools, convert fresh inputs, or validate outputs."""
+"""Orchestrate and validate the isolated G2 model conversion pipeline.
+
+OpenUSD stays in a dedicated model-tools image instead of the ROS Humble runtime.
+The host validates locked inputs and generated resources; conversion itself runs
+without network access against read-only source mounts.
+"""
 import argparse
 import hashlib
 import json
@@ -40,7 +45,7 @@ def require_usd_version(python):
 
 
 def validate_model_resources(generated):
-    """Check the generated format independently of the converter's manifest."""
+    """Independently check URDF, joint inventory, and local mesh containment."""
     robot = ET.parse(generated / 'g2.urdf').getroot()
     links = [link.get('name') for link in robot.findall('link')]
     if not links or None in links or len(set(links)) != len(links):
@@ -118,6 +123,7 @@ def validate_model_resources(generated):
 
 
 def validate_generated(generated, root=ROOT):
+    """Accept generated cache only when identity, file set, and hashes all match."""
     data = json.loads((generated / 'generated_manifest.json').read_text())
     lock = json.loads((root / 'model_sources/g2.lock.json').read_text())
     for field, expected in {
@@ -144,6 +150,11 @@ def validate_generated(generated, root=ROOT):
 
 
 def build_tools(image, root=ROOT):
+    """Build or reuse the converter image identified by Dockerfile content.
+
+    The cache check promises only the source label verified below; it does not
+    independently attest architecture or the wider native toolchain identity.
+    """
     dockerfile = root / 'Dockerfile.model-tools'
     label = 'org.agibot-g2.model-tools-source'
     expected = digest(dockerfile)
@@ -182,6 +193,8 @@ def main():
     run(fetch, timeout=1800)
     build_tools(args.image)
     generated.mkdir(parents=True, exist_ok=True)
+    # Fetch and image build may use the network, but conversion cannot. Read-only
+    # source mounts plus an empty writable output exclude hidden generated inputs.
     command = ['docker', 'run', '--rm', '--network', 'none', '--memory', '3g', '--cpus', '2',
                '--user', f'{os.getuid()}:{os.getgid()}', '--read-only', '--tmpfs', '/tmp:rw,size=128m',
                '--mount', f'type=bind,src={ROOT},dst=/workspace,readonly',

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Allowlisted source packaging and bounded fresh-directory release verification."""
+"""Package source-only delivery and verify it in a bounded fresh directory.
+
+The allowlist excludes models, caches, Git metadata, credentials, and generated
+build output. Archive checksums and manifests remain external sidecars, avoiding
+a self-reference between an archive and the receipt that names its final digest.
+"""
 import argparse
 import datetime
 import gzip
@@ -23,7 +28,7 @@ def digest(path):
 
 
 def isolated_environment(parent):
-    """Use public system tools and the local daemon without inherited credentials."""
+    """Isolate user caches and credentials while allowing public daemon layers."""
     env = {'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
            'LANG': 'C.UTF-8', 'LC_ALL': 'C.UTF-8',
            'DOCKER_HOST': 'unix:///var/run/docker.sock', 'DOCKER_CONTEXT': 'default',
@@ -93,6 +98,7 @@ def collect_simulation_evidence(root, report):
 
 
 def package(output):
+    """Create a deterministic source archive and external integrity sidecars."""
     data=manifest(ROOT,'delivery')
     required = {'README.md', 'README.zh-CN.md', 'Makefile', 'Dockerfile.sim',
                 'Dockerfile.model-tools', 'compose.sim.yaml', 'model_sources/g2.lock.json',
@@ -129,6 +135,7 @@ def package(output):
 
 
 def extract(archive,parent):
+    """Safely extract regular allowlisted files and verify every content hash."""
     expected=archive.with_suffix(archive.suffix+'.sha256').read_text().split()[0]
     if digest(archive)!=expected:raise ValueError('Archive checksum mismatch')
     source_manifest=json.loads(archive.with_suffix(archive.suffix+'.manifest.json').read_text())
@@ -152,6 +159,7 @@ def extract(archive,parent):
 
 
 def verify(args):
+    """Exercise documented acquisition, conversion, build, and simulation in isolation."""
     if not args.accept_noncommercial_license:raise ValueError('Review the model license, then explicitly accept noncommercial use for this experiment')
     parent=args.parent.resolve();parent.mkdir(parents=True,exist_ok=True)
     if shutil.disk_usage(parent).free < 4*1024**3:raise RuntimeError('At least4GiB free required; no old resources will be pruned')

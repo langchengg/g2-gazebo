@@ -26,6 +26,7 @@ LIVE_PROCESSES = []
 
 
 def start(argv, label, env=None):
+    """Start and register one process owned by this visual supervisor."""
     process = supervisor.start(argv, label, env)
     LIVE_PROCESSES.append((label, process))
     return process
@@ -37,6 +38,7 @@ def stop_requested(*_):
 
 
 def wait_for(condition, description, timeout=90.):
+    """Wait on wall time while failing if any owned prerequisite exits."""
     end = time.monotonic()+timeout
     while not STOPPING and time.monotonic() < end:
         for label, process in LIVE_PROCESSES:
@@ -50,6 +52,7 @@ def wait_for(condition, description, timeout=90.):
 
 
 def windows(pattern, visible=True):
+    """Return X11 windows matching a role pattern and visibility requirement."""
     result = subprocess.run(['xdotool', 'search'] + (['--onlyvisible'] if visible else []) + ['--name', pattern],
                             env=ENV, capture_output=True, text=True, timeout=5)
     if result.returncode not in (0, 1) or (result.returncode == 1 and result.stderr.strip()):
@@ -210,6 +213,7 @@ def main():
 
 
 def cleanup():
+    """Stop GUI dependents in reverse order, then simulation and display services."""
     errors = []
     for label, process in reversed(supervisor.PROCESSES):
         try:

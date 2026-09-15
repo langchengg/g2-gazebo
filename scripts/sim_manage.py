@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Run project-scoped Fortress commands and retain failures and source identity."""
+"""Run project-scoped Fortress commands with bounded evidence and cleanup.
+
+Verification-style runs receive a unique run id, container name, and Gazebo
+transport partition. The persistent Compose session remains directory-scoped.
+Both paths require the image-embedded runtime manifest to match current source.
+"""
 import argparse
 import datetime
 import hashlib
@@ -33,6 +38,7 @@ def main():
     name = project + '-runner'
 
     def command(argv, timeout=120, allow_failure=False):
+        """Run a process group with a monotonic timeout and durable command record."""
         log = out / (str(len(records)).zfill(2) + '-command.log')
         print('+', ' '.join(argv), flush=True)
         start = time.monotonic()
@@ -61,6 +67,7 @@ def main():
         return log.read_text(), code
 
     def check_model():
+        """Verify every generated file against the converter's closed manifest."""
         data = json.loads((model / 'generated_manifest.json').read_text())
         for relative, digest in data['files'].items():
             path = model / relative
@@ -112,6 +119,8 @@ def main():
                  'dpkg-query -W ignition-fortress libignition-gazebo6 ros-humble-ros-gz-bridge'], 60)
     elif args.action in ['verify', 'test', 'demo', 'record']:
         env['SIM_PARTITION'] = project
+        # Runtime network isolation demonstrates that models and simulator assets
+        # are closed before launch; ROS and Gazebo communicate inside the container.
         argv = ['docker', 'run', '--name', name, '--init', '--network', 'none',
                 '-e', 'IGN_PARTITION='+project, '-e', 'GZ_PARTITION='+project,
                 '-e', 'ROS_DOMAIN_ID=43', '-e', 'EVIDENCE_DIR=/evidence',

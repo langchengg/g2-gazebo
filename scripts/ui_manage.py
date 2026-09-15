@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Project-scoped persistent GUI on an existing authorized Linux desktop."""
+"""Manage a project-owned GUI on an existing authorized Xorg desktop.
+
+The host passes a narrowly scoped X11 cookie and socket to the container; it does
+not use ``xhost +``, privileged mode, or host networking. State files locate a
+session, while Docker labels provide the ownership check before any operation.
+"""
 import argparse
 import datetime
 import hashlib
@@ -24,6 +29,7 @@ def call(argv, timeout=30, **kwargs):
 
 
 def session():
+    """Resolve a live session and verify its repository ownership label."""
     if not STATE.exists():
         raise RuntimeError('No visual session. Run make demo-visual in the Ubuntu desktop terminal.')
     data = json.loads(STATE.read_text())

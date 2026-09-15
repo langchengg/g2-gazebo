@@ -114,6 +114,13 @@ def protobuf_top_fields(text):
 
 
 class Probe(Node):
+    """Collect and cross-check live ROS/Gazebo acceptance evidence.
+
+    The probe owns read-only subscriptions and explicit test clients. It measures
+    baseline, requests one motion, and proves excursion and return from raw source
+    samples rather than log text or action result alone. All waits have monotonic
+    wall deadlines so paused simulation time cannot deadlock verification.
+    """
     def __init__(self, timeout, evidence):
         super().__init__('g2_sim_verification_probe', namespace='/g2/test',
                          parameter_overrides=[Parameter('use_sim_time', value=True)])
@@ -419,6 +426,7 @@ class Probe(Node):
         self.ready()
 
     def baseline(self):
+        """Capture fresh, stationary broadcaster state before requesting motion."""
         self.ready()
         recent = list(self.telemetry)[-6:]
         q0 = positions(recent[-1], self.names)
@@ -454,6 +462,7 @@ class Probe(Node):
         self.details['disabled'] = {'samples': len(samples), 'baseline': q0, 'request_rejected': True}
 
     def motion(self):
+        """Verify accepted service, physical excursion, stable return, and result."""
         assert self.config['enable_motion'] is True, 'motion test requires explicit enable_motion=true'
         assert abs(abs(self.config['displacement']) - .05) < 1e-10, 'acceptance profile must use 0.05 rad'
         q0 = self.baseline()
@@ -686,6 +695,7 @@ class Probe(Node):
             'node_removed': True, 'no_false_success': True}
 
     def correlate(self):
+        """Match raw and public samples by source stamp and joint-name mapping."""
         # Public positions must be exactly a reordered original broadcaster sample.
         # DDS subscriptions have independent callback queues: the final public
         # callback can wake the preceding wait before its source callback runs.
@@ -758,6 +768,7 @@ class Probe(Node):
         return control
 
     def pause_reset(self, world):
+        """Prove pause emits no new measurement and reset invalidates the old epoch."""
         assert self.config['enable_motion'] is True
         self.baseline()
         control = self.world_control(world)

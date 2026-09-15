@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Fetch the pinned, noncommercial G2 subset without executing vendor code."""
+"""Acquire the locked G2 source subset without executing vendor code.
+
+Only files named in the project lock are downloaded from its immutable dataset
+revision. Size and SHA-256 checks establish repeatable input identity; license
+acknowledgment records consent for this lock, not a transfer of rights.
+"""
 import argparse
 from contextlib import contextmanager
 import hashlib
@@ -20,6 +25,11 @@ class DownloadDeadlineExceeded(RuntimeError):
 
 @contextmanager
 def download_deadline(seconds):
+    """Bound DNS, transfer, retry, and backoff by one wall-clock deadline.
+
+    This Unix signal timer runs on the CLI's main thread and restores any timer
+    and handler owned by its caller when the context exits.
+    """
     # This CLI runs on the main thread of the supported Linux/Mac platforms.
     # The timer interrupts a stalled DNS/connect/read too; socket timeouts alone
     # do not bound a server that keeps delivering very small chunks.
@@ -54,6 +64,12 @@ def sha256(path):
 
 
 def fetch(lock, cache, accept_noncommercial_license=False, file_timeout=600):
+    """Populate and verify exactly the files described by a model lock.
+
+    Valid cache entries require locked size and digest. Damaged entries are moved
+    aside before an atomic temporary-file download; bounded retries never accept
+    HTML/API errors, LFS pointers, partial data, or checksum mismatches.
+    """
     if not 0 < file_timeout <= 3600:
         raise ValueError('File timeout must be positive and at most 3600 seconds')
     manifest = json.loads(lock.read_text())

@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Convert the pinned HF G2 USD geometry to local OBJ and a Gazebo URDF.
+"""Convert composed, pinned HF G2 geometry into deterministic runtime assets.
 
 Requires usd-core==26.8 in a conversion-only environment. Runtime needs no USD.
 Original assets are never edited. Generated assets retain CC-BY-NC-SA-4.0.
+Outputs include OBJ/MTL meshes, a shared Gazebo/RViz URDF, joint inventory,
+conversion report, and final generated-file manifest.
 """
 import argparse
 import hashlib
@@ -23,7 +25,7 @@ def numbers(values):
 
 
 def primitive_mesh(prim):
-    """Tessellate authored collision primitives; retain their USD transforms."""
+    """Read a mesh or deterministically tessellate a supported USD primitive."""
     if prim.IsA(UsdGeom.Cube):
         size = UsdGeom.Cube(prim).GetSizeAttr().Get() / 2
         points = [Gf.Vec3d(x*size, y*size, z*size)
@@ -60,6 +62,7 @@ def primitive_mesh(prim):
 
 
 def color_for(prim):
+    """Resolve a constant diffuse color without retaining shader networks."""
     material, _ = UsdShade.MaterialBindingAPI(prim).ComputeBoundMaterial()
     if material:
         for child in Usd.PrimRange(material.GetPrim()):
@@ -77,6 +80,13 @@ def color_for(prim):
 
 
 def export_geometry(prim, link, dst, cache):
+    """Bake one composed USD primitive into its owning link's OBJ frame.
+
+    Polygons are fan-triangulated and exact zero-area faces are omitted. Normals
+    use the inverse-transpose transform; vertices split at normal seams to satisfy
+    DART's one-normal-per-imported-vertex expectation. Material subsets become
+    constant-color MTL entries, while returned metadata records transforms.
+    """
     points, faces = primitive_mesh(prim)
     transform, resets = cache.ComputeRelativeTransform(prim, link)
     if resets:
@@ -194,6 +204,7 @@ def export_geometry(prim, link, dst, cache):
 
 
 def validate_inertia(link):
+    """Check positive mass, positive-definite inertia, and body inequalities."""
     inertial = link.find('inertial')
     if inertial is None:
         return
@@ -219,6 +230,8 @@ def main():
     parser.add_argument('--hardware-plugin', required=True)
     args = parser.parse_args()
     lock = json.loads((root/'model_sources/g2.lock.json').read_text())
+    # Verify all locked input bytes before composition; every used USD layer must
+    # then resolve inside the raw root and appear in the same reviewed lock.
     for item in lock['files']:
         path = args.cache/'raw'/item['path']
         if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=item['sha256']:
@@ -262,6 +275,8 @@ def main():
               'coordinate_system':{'meters_per_unit':1,'up_axis':'Z'},
               'geometry_source':'composed HF robot.usda; link-local transforms baked'}
     cache = UsdGeom.XformCache()
+    # Replace URDF visuals/collisions with composed USD geometry so no untracked
+    # source mesh reference can survive into the runtime description.
     for link in robot.findall('link'):
         name = link.get('name'); validate_inertia(link)
         for old in list(link):
@@ -330,6 +345,8 @@ def main():
             if not lo<=0<=hi:raise ValueError('Initial controlled position outside limits')
             ET.SubElement(joint,'dynamics',{'damping':'0.1','friction':'0.0'})
         inventory.append(item)
+    # Fix the base to the world and expose only the selected seven joints through
+    # ros2_control while retaining link geometry and inertia.
     ET.SubElement(robot,'link',{'name':'world'})
     joint=ET.SubElement(robot,'joint',{'name':'world_to_base','type':'fixed'})
     ET.SubElement(joint,'parent',{'link':'world'});ET.SubElement(joint,'child',{'link':'base_link'})
@@ -358,6 +375,8 @@ def main():
     (output/'conversion.json').write_text(json.dumps(report,indent=2)+'\n')
     for file in ['LICENSE','README.md']:
         shutil.copyfile(args.cache/'raw'/file,output/('SOURCE_'+file))
+    # Write the manifest last; it covers every completed output except itself and
+    # binds runtime arguments, converter bytes, lock bytes, and source revision.
     hashes={str(p.relative_to(output)):hashlib.sha256(p.read_bytes()).hexdigest()
             for p in sorted(output.rglob('*')) if p.is_file() and p.name!='generated_manifest.json'}
     (output/'generated_manifest.json').write_text(json.dumps({

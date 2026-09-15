@@ -1,4 +1,9 @@
-"""Gazebo simulation adapters using standard ROS interfaces, never vendor SDKs."""
+"""Bind the application layer to one Gazebo/ros2_control simulation world.
+
+The backend consumes bridged ``/clock`` and broadcaster joint state, sends
+``FollowJointTrajectory`` goals, and publishes project status and telemetry. It
+never synthesizes physical observations and does not use a vendor SDK.
+"""
 from collections import deque
 import copy
 import json
@@ -32,6 +37,12 @@ STATUS = QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE,
 
 
 def load_config(node, parameter):
+    """Load immutable simulation policy from the generated model inventory.
+
+    Gazebo owns state and time, making ``use_sim_time`` mandatory. Joint names and
+    limits are supplied by launch from generated assets. Trajectory durations use
+    simulation seconds; watchdog budgets use monotonic wall seconds.
+    """
     if not node.get_parameter('use_sim_time').value:
         raise ValueError('backend=gazebo requires use_sim_time=true')
 
@@ -72,7 +83,12 @@ def load_config(node, parameter):
 
 
 class GazeboSource:
-    """Subscribe to the one simulation world; no publishers synthesize feedback."""
+    """Own subscriptions to the only accepted physical-state source.
+
+    ``/clock`` defines the world timeline and the controller broadcaster supplies
+    joint state. A backward clock jump creates a new epoch. Independent DDS topic
+    delivery may put state slightly ahead of clock, within a bounded window.
+    """
     def __init__(self, node, parameter):
         self.node = node
         self.config, self.interfaces = load_config(node, parameter)
@@ -112,7 +128,13 @@ class GazeboSource:
 
 
 class GazeboBackend(GazeboSource):
-    """Nonblocking trajectory action owner with independent observed completion."""
+    """Own the trajectory action lifecycle and observed completion checks.
+
+    Trigger success means dispatch was accepted, not that motion completed.
+    Controller goal acceptance, successful result, and a fresh stable broadcaster
+    observation are separate stages. ``(run_id, epoch)`` tokens prevent late
+    callbacks from mutating a reset, timed-out, or newer run.
+    """
     def __init__(self, node, parameter):
         self.timer = self.action = self.manager = None
         self.goal = self.send_future = self.result_future = self.cancel_future = None
@@ -156,6 +178,11 @@ class GazeboBackend(GazeboSource):
         return ''
 
     def request(self, request, response):
+        """Dispatch a full seven-joint goal after readiness and opt-in checks.
+
+        The default zero trajectory header starts on controller receipt in
+        simulation time. Complete vectors hold non-target joints at baseline.
+        """
         wall = time.monotonic()
         reason = ('simulation motion is disabled' if not self.enable_motion else
                   'a motion request is already running' if self.run.state == 'RUNNING' else
@@ -201,6 +228,7 @@ class GazeboBackend(GazeboSource):
         return response
 
     def current(self, token):
+        """Return whether an asynchronous callback still belongs to this run."""
         return (token == (self.run.run_id, self.run.epoch) and
                 token[1] == self.feedback.epoch and self.run.state == 'RUNNING' and not self.closing)
 
@@ -230,6 +258,7 @@ class GazeboBackend(GazeboSource):
             self.last_action_feedback_wall = time.monotonic()
 
     def goal_result(self, token, handle, future):
+        """Record controller status; broadcaster evidence still decides success."""
         try:
             response = future.result()
             if self.current(token):
@@ -290,6 +319,7 @@ class GazeboBackend(GazeboSource):
             self.manager_active = False
 
     def tick(self):
+        """Run wall-clock watchdogs and refresh controller-manager readiness."""
         wall = time.monotonic()
         if self.manager_future is not None and wall - self.manager_requested > 3.0:
             expired, self.manager_future = self.manager_future, None
@@ -338,6 +368,7 @@ class GazeboBackend(GazeboSource):
             self.last_status, self.last_status_wall = encoded, wall
 
     def close(self):
+        """Stop new work and request cancellation before ROS resources disappear."""
         if self.closing:
             return
         self.closing = True
@@ -351,7 +382,13 @@ class GazeboBackend(GazeboSource):
 
 
 class GazeboTelemetry(GazeboSource):
-    """Forward only new simulator samples, throttled by their sampling clock."""
+    """Publish a bounded-rate copy of genuine simulator feedback.
+
+    Throttling uses source simulation stamps, so pause cannot manufacture new
+    measurements. A deep copy preserves the subscribed message and source stamp.
+    Simulation Hz, wall Hz, and their ratio describe physics cadence, delivery
+    cadence, and measured real-time factor respectively.
+    """
     def __init__(self, node, parameter):
         super().__init__(node, parameter)
         self.publish_hz = parameter('publish_hz', 10.0)
@@ -371,6 +408,7 @@ class GazeboTelemetry(GazeboSource):
         self.arrivals.clear()
 
     def on_sample(self, message, values):
+        """Forward a new source sample at most once per simulation-time period."""
         ns = self.feedback.stamp_ns
         self.arrivals.append((ns, time.monotonic()))
         if self.last_published_stamp is not None and ns - self.last_published_stamp < round(1e9 / self.publish_hz):

@@ -15,6 +15,7 @@ import time
 
 
 def stop(process):
+    """Stop only the recorder/probe process group created by this invocation."""
     if process.poll() is None:
         os.killpg(process.pid, signal.SIGINT)
         try:
@@ -79,6 +80,7 @@ def capture_luma_quality(video, output, timeout=20.):
 
 
 def main():
+    """Record an existing READY session and then request its one explicit motion."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--session', type=Path, default=Path('/evidence/visual-session.json'))
     parser.add_argument('--output', type=Path, required=True)
