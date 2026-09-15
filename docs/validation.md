@@ -33,7 +33,7 @@ was then committed as `15495a9` and is the executable source tested below.
 |---|---:|---:|---:|---:|
 | Ubuntu 22.04.5, native arm64 | PASS | PASS | PASS | Automated X11/render/TF PASS; fresh Mac-visible pixel check BLOCKED by Ubuntu lock screen |
 | Ubuntu 22.04, native amd64 | Supported by preflight logic | NOT TESTED | NOT TESTED | NOT TESTED |
-| Emulated cross-architecture execution | Classified by doctor | NOT TESTED | NOT TESTED | NOT TESTED |
+| Cross-architecture or emulated execution | Rejected by the current preflight policy | NOT TESTED | NOT TESTED | NOT TESTED |
 
 `make doctor` reports `validation_status=NOT_TESTED` on every platform because it
 checks prerequisites only. Runtime PASS is assigned here only from the actual test

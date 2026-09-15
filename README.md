@@ -115,25 +115,6 @@ Review the model license in section 4 before the `ACCEPT_MODEL_LICENSE=yes` line
 Run these commands **one at a time**. Model/toolchain/image
 builds occupy that terminal until they finish.
 
-```bash
-# Headless path (recommended for default acceptance)
-sudo make doctor
-sudo make fetch-model ACCEPT_MODEL_LICENSE=yes
-sudo make prepare-model
-sudo make build-sim
-sudo make verify-sim
-
-# Optional GUI path
-sudo make sim-doctor
-sudo --preserve-env=DISPLAY,XAUTHORITY,XDG_SESSION_TYPE make demo-visual
-sudo make ui-info
-sudo make sim-hello
-sudo make telemetry
-sudo make check-visual
-sudo make record-visual
-sudo make ui-down
-```
-
 For headless environments, stop after `make verify-sim`.
 In GUI mode, wait for READY and desktop windows before sending motion.
 
