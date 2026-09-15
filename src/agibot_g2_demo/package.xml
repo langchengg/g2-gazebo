@@ -2,8 +2,8 @@
 <package format="3">
   <name>agibot_g2_demo</name>
   <version>0.2.0</version>
-  <description>Two Python rclpy applications for G2 Gazebo simulation and deterministic mock regression.</description>
-  <maintainer email="maintainer@example.invalid">Project maintainer</maintainer>
+  <description>Python ROS 2 application for Agibot G2 arm motion and joint telemetry in Gazebo simulation.</description>
+  <maintainer email="lang.cheng@student.manchester.ac.uk">Lang Cheng</maintainer>
   <license>Apache-2.0</license>
   <buildtool_depend>ament_python</buildtool_depend>
   <exec_depend>rclpy</exec_depend>

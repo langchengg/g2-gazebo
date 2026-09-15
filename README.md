@@ -2,6 +2,15 @@
 
 [中文逐步说明](README.zh-CN.md)
 
+## Clone & quick verification entry
+
+```bash
+git clone https://github.com/langchengg/g2-gazebo.git
+cd g2-gazebo
+```
+
+The repository root for this README is `g2-gazebo`.
+
 ## Introduction
 
 This is an Agibot G2 **simulation** application. Gazebo Fortress runs the physics;
@@ -10,8 +19,8 @@ Two Python/rclpy application nodes provide the original exercise:
 
 | Requirement | Implementation |
 |---|---|
-| Source repository | Relocatable source archive; Git metadata is unnecessary |
-| Docker / ROS 2 / build | Ubuntu 22.04, ROS 2 Humble, native ARM64, normal `colcon build` installation |
+| Source repository | Git clone from GitHub (`https://github.com/langchengg/g2-gazebo.git`) |
+| Docker / ROS 2 / build | Ubuntu 22.04; native ARM64 validated, native x86_64/amd64 accepted by preflight but runtime not tested; ROS 2 Humble with a normal `colcon build` installation |
 | `sayHello` | `/g2/sayHello` requests a small out-and-back simulated left-arm trajectory |
 | `telemetry` | `/g2/telemetry` publishes Gazebo joint measurements on `/g2/joint_states` |
 | Installation and execution guide | This README and the equivalent Chinese guide |
@@ -24,26 +33,34 @@ from this README or from the existence of a GUI process.
 
 ## 1. Public prerequisites and execution locations
 
-Use **Ubuntu 22.04 ARM64** with Python 3.10, Docker Engine running on that Linux host,
-Docker Compose V2, Buildx, GNU Make, and an **existing graphical desktop using an Xorg (X11) login session**. The host needs `XDG_SESSION_TYPE=x11`, `DISPLAY`, a readable `XAUTHORITY`
-file for that display, and `/tmp/.X11-unix`. The project does not install a desktop. At the Ubuntu login screen, select your
-user, choose **Ubuntu on Xorg** from the gear menu, then log in. Save your desktop
-work before logging out to switch sessions. Wayland/XWayland is not supported by
-this full-desktop X11 recording path; actual capture failed in the development VM.
-A text-only server does not meet this interactive main-path prerequisite.
+Validation summary for this submission is kept in [docs/validation.md](docs/validation.md).
+
+
+Use an **Ubuntu 22.04 Linux host** with Python 3.10, Docker Engine,
+Docker Compose V2, Buildx, and GNU Make.
+
+For **headless acceptance**, no X11 session is required:
+`make doctor`, `make fetch-model`, `make prepare-model`, `make build-sim`, `make verify-sim` can all be used without `DISPLAY` and `XAUTHORITY`.
+
+For **GUI visual checks**, an existing graphical session is needed:
+an X11/Xorg login with `XDG_SESSION_TYPE=x11`, readable `XAUTHORITY` and `/tmp/.X11-unix`.
+The project does not install a desktop.
 
 The development VM has approximately 6 GiB RAM and had approximately 8 GiB free
 at the start of this reproduction work. These are observations, not validated
 minimum requirements. Allow **15 GiB free disk** for a first build where possible;
 OpenUSD compilation and Docker cache need additional temporary space. Builds use
 two compilation jobs. Keep other large builds stopped. Actual measured peaks and
-elapsed times belong in the release receipt. x86_64 and freshly installed Ubuntu
-or Docker hosts are **NOT TESTED** unless a separate receipt states otherwise.
+elapsed times belong in the validation receipt. `doctor` checks prerequisites; it
+does not grant runtime acceptance. Both architectures therefore report
+`validation_status=NOT_TESTED` at preflight. The current ARM64 runtime result is
+recorded separately in [docs/validation.md](docs/validation.md); native amd64 remains
+**NOT TESTED**.
 
-All project commands below run in the **Ubuntu graphical terminal**, in the extracted
-`g2-gazebo` directory. `sudo` uses ordinary interactive authorization; omit it only
-if your existing Docker permissions already allow access. Do not change Docker socket
-permissions, sudoers, firewall rules or networking to follow this guide.
+All project commands below run in the cloned or extracted
+`g2-gazebo` directory. For GUI replay, use the Ubuntu graphical terminal and
+preserve local Docker permissions; `sudo` is optional if your user is already in
+the docker group.
 
 If host utilities are missing, install only the prerequisites:
 
@@ -54,7 +71,7 @@ sudo apt-get install -y make python3 xauth x11-xserver-utils ca-certificates cur
 
 If Docker Engine, Compose or Buildx is absent, follow the official
 [Ubuntu Docker installation instructions](https://docs.docker.com/engine/install/ubuntu/)
-for Jammy/arm64 and install `docker-ce`, `docker-ce-cli`, `containerd.io`,
+for Ubuntu 22.04 on the host architecture and install `docker-ce`, `docker-ce-cli`, `containerd.io`,
 `docker-buildx-plugin` and `docker-compose-plugin` from the configured official
 repository. Inspect existing installations before resolving package conflicts.
 Host provisioning is a prerequisite, not an operation tested by extracting this
@@ -68,9 +85,11 @@ No browser URL, SSH tunnel, noVNC endpoint or TCP port is needed for this path.
 The optional headless VNC implementation is **NOT TESTED as a delivery path** and
 is not a substitute for the visible-desktop prerequisite.
 
-## 2. Verify and extract the source archive
+## 2. Clone, verify and enter source tree
 
-Receive the `.tar.gz`, its `.tar.gz.sha256`, and `.tar.gz.manifest.json` together.
+Primary path is Git clone. If a custom archived source package is supplied separately,
+use its `.tar.gz`, `.tar.gz.sha256`, and `.tar.gz.manifest.json` together. No Release
+asset is claimed by this guide.
 The external SHA-256 proves consistency with the supplied checksum, not an independent
 publisher signature. Replace the example archive path with the file you received:
 
@@ -90,22 +109,26 @@ The automated `verify-release` additionally validates every entry and content ha
 before extraction. Spaces in the parent path are supported and included in its test.
 No `.git`, author HOME, preconverted model or project image is required.
 
-## 3. Short complete Quick Start
+## 3. Short complete Quick Start (headless + optional GUI)
 
 Review the model license in section 4 before the `ACCEPT_MODEL_LICENSE=yes` line.
-Run these commands **one at a time** in Ubuntu terminal 1. Model/toolchain/image
-builds occupy that terminal until they finish. `demo-visual` waits up to 200 seconds
-for readiness, then returns while the interactive session remains running.
-After it prints READY, look at the three desktop windows before sending a request.
+Run these commands **one at a time**. Model/toolchain/image
+builds occupy that terminal until they finish.
+
+For headless environments, stop after `make verify-sim`.
+In GUI mode, wait for READY and desktop windows before sending motion.
 
 <!-- BEGIN QUICKSTART: docs/quickstart.commands.sh -->
 ```bash
 # Command checklist, not an unattended demo. Run one line at a time.
-# Ubuntu graphical terminal; working directory is the extracted g2-gazebo folder.
+# Working directory is the cloned or extracted g2-gazebo folder.
 sudo make doctor
 sudo make fetch-model ACCEPT_MODEL_LICENSE=yes
 sudo make prepare-model
 sudo make build-sim
+sudo make verify-sim
+
+# Optional visible desktop mode
 sudo make sim-doctor
 sudo --preserve-env=DISPLAY,XAUTHORITY,XDG_SESSION_TYPE make demo-visual
 sudo make ui-info
@@ -116,15 +139,14 @@ sudo make check-visual
 # Wait for this run_id to reach SUCCEEDED before recording another explicit motion.
 sudo make record-visual
 sudo make ui-down
-sudo make verify-sim
 ```
 <!-- END QUICKSTART -->
 
 The same command block is stored in `docs/quickstart.commands.sh`; it is a checklist,
 not an unattended animation. English and Chinese guides use the same block.
-`record-visual` intentionally requests **another** motion; wait for the first one to
-finish. `ui-down` stops only this extracted project's visual session. `verify-sim`
-then creates a separate short-lived world and cleans it up.
+`verify-sim` is the full headless acceptance check. `record-visual` intentionally
+requests **another** explicit motion; wait for the first one to finish. `ui-down` stops
+only this extracted project's visual session.
 
 ## 4. Fetch the fixed model, with your own license acknowledgment
 

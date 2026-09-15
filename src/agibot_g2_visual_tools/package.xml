@@ -3,7 +3,7 @@
   <name>agibot_g2_visual_tools</name>
   <version>0.1.0</version>
   <description>Official Humble RViz application with ordered rendering shutdown for the G2 simulation desktop.</description>
-  <maintainer email="maintainer@example.invalid">G2 Demo Maintainer</maintainer>
+  <maintainer email="lang.cheng@student.manchester.ac.uk">Lang Cheng</maintainer>
   <license>BSD-3-Clause</license>
   <buildtool_depend>ament_cmake</buildtool_depend>
   <build_depend>qtbase5-dev</build_depend>

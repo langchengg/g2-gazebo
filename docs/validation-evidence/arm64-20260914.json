@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "validation_date_utc": "2026-09-14",
+  "tested_executable_source": {
+    "commit": "15495a9ad801dd74c6fd636db9934808f447e361",
+    "baseline_main": "7a276bfc7ddd7e6ec68c5c573a7e36b48869fe8c",
+    "acquisition": "git archive of the exact tested commit into a fresh VM-native directory",
+    "runtime_file_count": 87,
+    "runtime_source_sha256": "f42e0e196e9c161f890997c71e1deda135ca6b800f703166ed20ed95917ff93d",
+    "reporting_relation": "This JSON and validation.md are delivery-only reporting files added after runtime validation; the runtime manifest excludes both and remains unchanged."
+  },
+  "platform": {
+    "host_os": "Ubuntu 22.04.5 LTS",
+    "host_arch": "arm64",
+    "daemon_endpoint": "unix:///var/run/docker.sock",
+    "daemon_arch": "arm64",
+    "builder_driver": "docker",
+    "builder_platforms": ["linux/arm64"],
+    "execution_mode": "native",
+    "docker_version": "29.8.0",
+    "preflight_result": "PASS",
+    "doctor_validation_status": "NOT_TESTED",
+    "runtime_validation_status": "PASS"
+  },
+  "model": {
+    "repo_id": "agibot-world/GenieSimAssets",
+    "repo_type": "dataset",
+    "revision": "a0813aad7c16165daffbe6c2737754e0344809ee",
+    "lock_sha256": "a7567a2953c73c7c525d9fdbc8951a4c45ed53d0bd6dd82670f68aa0dd3223ab",
+    "converter_sha256": "6950fb2ca0e4c10f8210c5de20f424c64155d2e863b2eabae5c9cf27527e3864",
+    "raw_file_count": 11,
+    "raw_bytes": 59390249,
+    "fetch_boundary": "fresh candidate-local cache; public HTTPS; no private token",
+    "conversion_host": "Linux arm64",
+    "generated_mesh_count": 106,
+    "generated_manifest_file_count": 217,
+    "model_tools_cache": "reused only after source, Dockerfile label and arm64 architecture matched"
+  },
+  "simulation_image": {
+    "tag": "agibot-g2-sim:fortress-bbbfe50d83",
+    "id": "sha256:316bca2d34134d08744875acc33c634966a70664d46b1e79864f2aa8fa311055",
+    "architecture": "arm64",
+    "colcon_packages_built": 3,
+    "runtime_source_manifest_matched": true,
+    "cache_boundary": "public base and toolchain layers reused; candidate application image built from the tested extracted source"
+  },
+  "checks": {
+    "doctor": {"command": "make doctor", "exit_code": 0, "preflight_result": "PASS", "validation_status": "NOT_TESTED"},
+    "targeted_doctor_pytest": {"exit_code": 0, "passed": 18, "failed": 0},
+    "test_sim": {
+      "command": "make test-sim",
+      "exit_code": 0,
+      "colcon_tests": 484,
+      "colcon_failed": 0,
+      "gazebo_cases": 29,
+      "gazebo_failed": 0,
+      "wall_seconds": 141.51173010899993,
+      "motion_run_id": "6c90bf0d756e480a88402fa891e817a6"
+    },
+    "verify_sim": {
+      "command": "make verify-sim",
+      "exit_code": 0,
+      "cases": 6,
+      "passed": 6,
+      "run_id": "f196d1028631430985dbc9122808f240",
+      "requested_delta_rad": 0.05,
+      "peak_signed_excursion_rad": 0.04996603245366015,
+      "final_max_error_rad": 0.000011127090840932436,
+      "non_target_max_error_rad": 1.7169649898651914e-11,
+      "real_time_factor": 0.9998331966804614,
+      "matched_public_samples": 68,
+      "cleanup_errors": [],
+      "remaining_owned_pids": []
+    },
+    "visual": {
+      "demo_visual_exit_code": 0,
+      "check_visual_exit_code": 0,
+      "sim_hello_exit_code": 0,
+      "telemetry_exit_code": 0,
+      "ui_down_exit_code": 0,
+      "windows": ["Gazebo", "RViz2", "observer"],
+      "motion_started_automatically": false,
+      "motion_run_id": "c5ac1f66b2b14d05b2416abc6e0b3979",
+      "motion_state": "SUCCEEDED",
+      "observed_excursion_rad": 0.04997027709300109,
+      "tf_fk_sample_count": 147,
+      "max_fk_matrix_abs_error": 5.551115123125783e-16,
+      "fixed_frame": "world",
+      "display_precondition": "Initial 1024x768 mode was rejected; rerun reached READY after selecting the existing 1600x900 Xorg mode",
+      "fresh_mac_visible_frame": "BLOCKED: Ubuntu display was locked during host-side capture",
+      "cleanup_errors": [],
+      "remaining_owned_pids": []
+    }
+  },
+  "other_platforms": {
+    "native_amd64_runtime": "NOT_TESTED",
+    "native_amd64_gui": "NOT_TESTED",
+    "emulated_runtime": "NOT_TESTED"
+  },
+  "external_evidence_archives": [
+    {"name": "doctor.tar.gz", "sha256": "62741ac29df3b804ee0d5370e3ffd9e2e2ecd28b0a293d14b24b5cf39d5e95c0"},
+    {"name": "build-sim.tar.gz", "sha256": "95d6fdedfce479d24e5cc07f187f42d464894adcf63b5bae7702d2ff11c0c533"},
+    {"name": "test-sim.tar.gz", "sha256": "8bb66ba73b8747840ea470d0f8792041d3ea9d6b06b5c8dbc53ccb5748d88219"},
+    {"name": "verify-sim.tar.gz", "sha256": "ef7a95a44045bf5f2917fcc4cce35266bacfa44e4441f5055e6d8c7fd3831e0a"},
+    {"name": "visual.tar.gz", "sha256": "7d72a6d5d2a785c52368893eb82bdcd9619869f463d19f65552d296b2333b631"}
+  ]
+}
