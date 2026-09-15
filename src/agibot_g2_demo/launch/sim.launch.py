@@ -1,4 +1,9 @@
-"""Fixed-base G2 Fortress simulation; two Python apps and explicit infrastructure."""
+"""Orchestrate one fixed-base G2 world and the two project applications.
+
+Gazebo, robot_state_publisher, and both applications share the generated URDF and
+broadcaster feedback chain. Startup is ordered so applications cannot accept work
+before controller activation completes.
+"""
 import hashlib
 import json
 from pathlib import Path
@@ -14,6 +19,12 @@ from launch_ros.actions import Node
 
 
 def setup(context):
+    """Validate generated assets and construct the ordered process graph.
+
+    Hashes prove consistency with the local generated manifest, not independent
+    vendor authenticity. The inventory supplies complete joint names and limits
+    to both applications instead of duplicating model facts in source code.
+    """
     assets = Path(LaunchConfiguration('model_dir').perform(context))
     manifest = json.loads((assets / 'generated_manifest.json').read_text())
     for name, digest in manifest['files'].items():
@@ -37,6 +48,8 @@ def setup(context):
     app_share = Path(get_package_share_directory('agibot_g2_demo'))
     description = Path(get_package_share_directory('agibot_g2_description'))
     world = description / 'worlds/g2_demo.sdf'
+    # Gazebo owns physics. The one-way bridge exports its clock to ROS, while
+    # robot_state_publisher consumes the same URDF and broadcaster joint states.
     server = IncludeLaunchDescription(PythonLaunchDescriptionSource(
         str(Path(get_package_share_directory('ros_gz_sim')) / 'launch/gz_sim.launch.py')),
         launch_arguments={'gz_args': '-r -s -v 3 ' + str(world), 'on_exit_shutdown': 'true'}.items())
@@ -66,6 +79,7 @@ def setup(context):
         output='screen') for exe in ['sayHello', 'telemetry']]
 
     def next_when_ok(next_actions):
+        """Continue startup only after the preceding spawner exits successfully."""
         def callback(event, ctx):
             if ctx.is_shutdown:
                 return []
@@ -75,6 +89,7 @@ def setup(context):
         return callback
 
     def stop_on_exit(event, ctx):
+        """Shut down the launch when a long-lived component exits normally."""
         if ctx.is_shutdown:
             return []
         if event.returncode != 0:
@@ -82,10 +97,14 @@ def setup(context):
         return [EmitEvent(event=Shutdown(reason='simulation component exited'))]
 
     def fail_on_process_error(event, ctx):
+        """Promote any process failure to a launch-wide nonzero shutdown."""
         if event.returncode != 0 and not ctx.is_shutdown:
             raise RuntimeError('simulation process exited abnormally: ' + str(event.returncode))
         return []
 
+    # Spawn the model, activate state broadcasting, activate trajectory control,
+    # then start both applications. Runtime controller freshness remains checked
+    # by the backend after the spawner activation step.
     handlers = [RegisterEventHandler(OnProcessExit(on_exit=fail_on_process_error)), RegisterEventHandler(OnProcessExit(target_action=spawn, on_exit=next_when_ok([broadcaster]))),
                 RegisterEventHandler(OnProcessExit(target_action=broadcaster, on_exit=next_when_ok([arm]))),
                 RegisterEventHandler(OnProcessExit(target_action=arm, on_exit=next_when_ok(apps)))]
@@ -95,6 +114,7 @@ def setup(context):
 
 
 def generate_launch_description():
+    """Declare generated assets and the explicit, false-by-default motion opt-in."""
     return LaunchDescription([
         DeclareLaunchArgument('model_dir', default_value='/opt/g2-model'),
         DeclareLaunchArgument('enable_motion', default_value='false'),

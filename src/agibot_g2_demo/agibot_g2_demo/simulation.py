@@ -14,6 +14,12 @@ def finite(value):
 
 @dataclass(frozen=True)
 class SimConfig:
+    """Limits and timing policy for one simulated arm excursion.
+
+    Positions are radians, velocities are radians/second, and acceleration is
+    radians/second squared. ``duration`` covers the complete out-and-back path.
+    These are simulation acceptance bounds, not hardware safety limits.
+    """
     names: tuple
     lower: tuple
     upper: tuple
@@ -31,6 +37,7 @@ class SimConfig:
     wall_budget: float = 180.0
 
     def validate(self):
+        """Reject inconsistent inventory or an invalid quintic path before dispatch."""
         n = len(self.names)
         if not n or any(not isinstance(v, str) or not v for v in self.names) or len(set(self.names)) != n:
             raise ValueError('sim_joint_names must contain distinct nonempty model joint names')
@@ -67,7 +74,9 @@ class SimConfig:
 def ordered_sample(names, positions, velocities, efforts, config, state_interfaces=('position', 'velocity')):
     """Validate broadcaster input and map by names; preserve unknown optional fields.
 
-    Some Humble broadcasters fill an unsupported optional interface with NaNs.
+    JointState array order is not an interface contract, so values are mapped by
+    joint name into model-inventory order. Some Humble broadcasters fill an
+    unsupported optional interface with NaNs.
     Only an entirely unavailable optional field explicitly absent from the model
     interface inventory can become an empty array. Mixed NaNs are corruption.
     """
@@ -96,6 +105,15 @@ def ordered_sample(names, positions, velocities, efforts, config, state_interfac
 
 
 def trajectory_points(config, baseline):
+    """Build a complete-joint out-and-back trajectory from measured state.
+
+    Every waypoint contains all controlled joints, holding non-target joints at
+    their measured baseline. Supplying position, velocity, and acceleration
+    selects quintic interpolation in the Humble trajectory controller.
+
+    Raises:
+        ValueError: If the baseline or target violates the model inventory.
+    """
     config.validate()
     if len(baseline) != len(config.names) or any(not finite(v) for v in baseline):
         raise ValueError('baseline must contain finite feedback for every controlled joint')
@@ -112,7 +130,12 @@ def trajectory_points(config, baseline):
 
 
 class SimFeedback:
-    """Observe /clock and measured joint state, with a new epoch after reset."""
+    """Track simulator time and measured state across clock epochs.
+
+    Simulation nanoseconds determine source age and motion progress. Monotonic
+    wall seconds drive watchdogs because paused ``/clock`` must not pause timeout
+    handling. A backward clock jump starts a new epoch and clears old feedback.
+    """
     def __init__(self, config):
         self.config = config
         self.epoch = 0
@@ -175,7 +198,12 @@ class SimFeedback:
 
 
 class SimRun:
-    """Action result and independently observed motion must agree on completion."""
+    """Validate one asynchronous motion through IDLE/RUNNING/terminal states.
+
+    Controller success is necessary but insufficient: a fresh broadcaster sample
+    after the result must prove excursion, non-target holding, and stable return.
+    The wall budget remains independent of simulation pause or reset.
+    """
     def __init__(self, config):
         self.config = config
         self.run_id = ''
@@ -215,6 +243,7 @@ class SimRun:
             self.state, self.reason = 'FAILED', str(reason)
 
     def result(self, successful, reason, feedback):
+        """Record controller completion without claiming observed completion."""
         if self.state != 'RUNNING':
             return
         if not successful:
@@ -225,6 +254,7 @@ class SimRun:
             self.reason = 'controller succeeded; waiting for independent fresh stable feedback'
 
     def update(self, feedback, wall):
+        """Advance acceptance checks with feedback from the current clock epoch."""
         if self.state != 'RUNNING':
             return
         if feedback.epoch != self.epoch:

@@ -1,4 +1,10 @@
-"""Validate source observations and publish each accepted observation once."""
+"""Validate source observations and expose project joint telemetry.
+
+In Gazebo mode the joint_state_broadcaster owns the measurement; this node
+publishes validated copies on ``/g2/joint_states`` while preserving source
+timestamps. It never advances a model or creates replacement samples during a
+simulation pause.
+"""
 from collections import deque
 import json
 import math
@@ -17,6 +23,12 @@ from .motion import SourceFreshness, mock_joint_names, validate_observation
 
 
 class TelemetryNode(Node):
+    """Own one telemetry adapter, the public stream, and its health lifecycle.
+
+    Gazebo delegates validation and throttling to ``GazeboTelemetry``. Mock and
+    read-only GDK modes consume the legacy internal stream and retain their local
+    receive-time mapping for compatibility.
+    """
     def __init__(self):
         super().__init__('telemetry', namespace='/g2')
         self.timer = self.sim = None
@@ -42,6 +54,7 @@ class TelemetryNode(Node):
         return SetParametersResult(successful=True)
 
     def _configure(self):
+        """Construct one source path with backend-specific clock semantics."""
         self.backend = self.parameter('backend', 'mock')
         if self.backend == 'gazebo':
             from .backends.gazebo_backend import GazeboTelemetry
@@ -112,6 +125,7 @@ class TelemetryNode(Node):
         return None
 
     def receive(self, message):
+        """Forward one valid legacy observation without inventing a newer stamp."""
         received = time.monotonic()
         observation = Observation(names=list(message.name), positions=list(message.position),
                                   velocities=list(message.velocity), efforts=list(message.effort))
@@ -184,6 +198,7 @@ class TelemetryNode(Node):
         self.last_health = status
 
     def close(self):
+        """Idempotently stop health reporting and release the selected source."""
         if not self.closed:
             self.closed = True
             if self.sim is not None:

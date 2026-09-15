@@ -34,6 +34,12 @@ def sample(msg):
 
 
 class VisualProbe(Node):
+    """Correlate generated-model FK, shared telemetry, and timestamped TF.
+
+    This numerical probe checks that RViz infrastructure follows the same joint
+    source and description as Gazebo. It does not replace human inspection of a
+    rendered window.
+    """
     def __init__(self, urdf):
         super().__init__('visual_tf_verification', namespace='/g2/test',
                          parameter_overrides=[Parameter('use_sim_time', value=True)])

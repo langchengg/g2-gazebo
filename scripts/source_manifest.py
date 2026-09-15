@@ -17,6 +17,12 @@ EXCLUDED = {'__pycache__', '.pytest_cache', 'build', 'install', 'log',
 
 
 def manifest(root, scope):
+    """Hash canonical allowlisted source without depending on Git metadata.
+
+    ``runtime`` binds source to the built image; ``delivery`` additionally covers
+    documentation and legacy sources. Symlinks and known binary/secret-bearing
+    file types are rejected so a package cannot escape or hide outside the tree.
+    """
     directories = RUNTIME_ROOTS + (('docs', 'legacy') if scope == 'delivery' else ())
     names = list(ROOT_FILES) + (['README.md', 'README.zh-CN.md', '.gitignore'] if scope == 'delivery' else [])
     candidates = [root / name for name in names]

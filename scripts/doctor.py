@@ -23,6 +23,12 @@ def normalize_arch(value):
 
 
 def validate_environment(checks, system, machine, environ):
+    """Classify prerequisites without granting runtime validation.
+
+    Returns errors, warnings, the preflight result, and ``NOT_TESTED`` runtime
+    status. A valid amd64 preflight means the environment may proceed; only an
+    actual platform run can establish simulation validation.
+    """
     errors = []
     warnings = []
 
@@ -99,6 +105,7 @@ def validate_environment(checks, system, machine, environ):
 
 
 def main():
+    """Inspect host and local daemon prerequisites and write a machine report."""
     root = pathlib.Path(__file__).resolve().parents[1]
     out = root / '.artifacts' / 'doctor'
     out.mkdir(parents=True, exist_ok=True)
