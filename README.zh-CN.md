@@ -31,7 +31,7 @@ cd g2-gazebo
 
 ## 1. 公开前置条件与命令执行位置
 
-Validation summary for this submission is kept in [docs/validation.md](docs/validation.md).
+本次提交的验收摘要见 [docs/validation.md](docs/validation.md)。
 
 
 主机要求为 **Ubuntu 22.04 Linux**，并安装 Python 3.10、Docker Engine、
